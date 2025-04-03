@@ -138,7 +138,7 @@ function onWorkflowStart(clonedData, animationData) {
    if (clonedData.activeEffect?.constructor.name == "Boolean" && clonedData.activeEffect && animationData) { // item is ActiveEffect
       let effect = clonedData.item;
       if (effect.system.transferData.type == "aura" && effect.flags.autoanimations?.activeEffectType == "aura") {
-         let radius = clonedData.system.transferData.area.radius;
+         let radius = effect.radius;
          animationData.primary.options.size = radius;
       }
       else if (effect.system.transferData.type == "document" && effect.system.transferData.area.aura.transferred && effect.flags.autoanimations?.activeEffectType == "aura") {
@@ -147,7 +147,8 @@ function onWorkflowStart(clonedData, animationData) {
    }
    else if (clonedData.activeEffect?.constructor.name == "EffectWfrp4e" && clonedData.activeEffect?.system.transferData.type == "aura" && animationData) { // item is item.
       if (clonedData.activeEffect.flags?.autoanimations.activeEffectType == "aura") {
-         animationData.primary.options.size = clonedData.activeEffect.system.transferData.area.radius;
+         let effect = clonedData.activeEffect;
+         animationData.primary.options.size = effect.radius;
       }
    }
 }
