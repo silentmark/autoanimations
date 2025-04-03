@@ -70,8 +70,10 @@ export default class AAHandler {
         this.reachCheck = data.reach || 0;
         this.allTargets = data.targets;
         this.hitTargets = data.hitTargets;
-        this.hitTargetsId = data.hitTargets ? Array.from(this.hitTargets.filter(actor => actor.id).map(actor => actor.id)) : [];
-        this.playOnMiss = data.playOnMiss ?? (game.modules.get('midi-qol')?.active || game.system.id === 'pf2e' ? game.settings.get("autoanimations", "playonmiss") : false) ?? false;
+        if (data.hit && !this.hitTargets) this.hitTargets = data.targets;
+        this.hitTargets ??= [];
+        this.hitTargetsId = Array.from(this.hitTargets.filter(actor => actor.id).map(actor => actor.id));
+        this.playOnMiss = data.playOnMiss ?? (game.modules.get('midi-qol')?.active || game.system.id === 'pf2e'  || game.system.id === 'dnd5e' ? game.settings.get("autoanimations", "playonmiss") : false) ?? false;
 
         this.menu = this.animationData.menu;
 

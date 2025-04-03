@@ -469,6 +469,92 @@ class AAGameSettings extends TJSGameSettingsWithUI {
             break;
 
          case 'dnd5e':
+         
+            settings.push({
+               namespace,
+               key: 'playonDamageCore',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.coreondmg_name',
+                  hint: 'autoanimations.settings.coreondmg_hint',
+                  scope: scope.world,
+                  type: Boolean,
+                  default: false,
+                  config: true,
+               }
+            });
+            
+            settings.push({
+               namespace,
+               key: 'playonmiss',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.midionmiss_name',
+                  hint: 'autoanimations.settings.midionmiss_hint',
+                  scope: scope.world,
+                  type: Boolean,
+                  default: false,
+                  config: true,
+               }
+            });
+            settings.push({
+               namespace,
+               key: 'EnableCritical',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.crithit_name',
+                  hint: 'autoanimations.settings.crithit_hint',
+                  scope: scope.world,
+                  type: Boolean,
+                  default: false,
+                  config: true
+               }
+            });
+
+            settings.push({
+               namespace,
+               key: 'CriticalAnimation',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.crithitAnim_name',
+                  //name: 'Choose A File',
+                  scope: scope.world,
+                  config: true,
+                  type: String,
+                  default: "",
+                  filePicker: 'imagevideo'
+               }
+            });
+
+            settings.push({
+               namespace,
+               key: 'EnableCriticalMiss',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.critmiss_name',
+                  hint: 'autoanimations.settings.critmiss_hint',
+                  scope: scope.world,
+                  type: Boolean,
+                  default: false,
+                  config: true
+               }
+            });
+
+            settings.push({
+               namespace,
+               key: 'CriticalMissAnimation',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.critmissAnim_name',
+                  scope: scope.world,
+                  config: true,
+                  type: String,
+                  default: "",
+                  filePicker: 'imagevideo'
+               }
+            });
+            
+            break;
          case 'sw5e':
             if (game.modules.get('midi-qol')?.active) {
                settings.push({

@@ -68,11 +68,6 @@ export function systemHooks() {
         } else { runSwade(token, actor, item) }
     });
 
-    Hooks.on("BRSW-BeforePreviewingTemplate", async (template, data, ev) => {
-        const { token, actor, item } = getBRSWData(data);
-        runSwade(token, actor, item)
-    });
-
     Hooks.on("BRSW-CreateItemCardNoRoll", async (data) => {
         const { token, actor, item } = getBRSWData(data);
         if (item.flags?.autoanimations?.menu === "templatefx" || (item.flags?.autoanimations?.menu === "preset" && item.flags?.autoanimations?.presetType === "proToTemp")) {

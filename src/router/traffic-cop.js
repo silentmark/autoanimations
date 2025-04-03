@@ -31,7 +31,6 @@ export async function trafficCop(handler) {
                 case "a5e":
                 case "sw5e":
                 case "tormenta20":
-                case "swade":
                     aaTemplateHook = Hooks.once("createMeasuredTemplate", async (template) => {
                         //Hooks.callAll("aa.preAnimationStart", sanitizedData, data);
                         await wait(500)
@@ -127,7 +126,6 @@ export async function trafficCop(handler) {
             case "pf2e":
             case "sw5e":
             case "tormenta20":
-            case "swade":
                 aaTemplateHook = Hooks.once("createMeasuredTemplate", async (template) => {
                     //Hooks.callAll("aa.preAnimationStart", sanitizedData, data);
                     await wait(500)

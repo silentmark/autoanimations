@@ -5,108 +5,54 @@ import { getRequiredData }  from "./getRequiredData.js";
 
 // DnD5e System hooks provided to run animations
 export function systemHooks() {
-    if (game.modules.get("wire")?.active) return; // WIRE handles triggering AA
-    const dnd5eV4 = foundry.utils.isNewerVersion(game.system.version, 3.9);
-    if (game.modules.get("midi-qol")?.active) {
-        Hooks.on("midi-qol.AttackRollComplete", (workflow) => {
-            const activity = workflow.activity;
-            if(activity?.description?.chatFlavor?.includes("[noaa]")) return;
-            let playOnDamage = game.settings.get('autoanimations', 'playonDamage');
-            if (workflow.item?.hasAreaTarget || (workflow.item?.hasDamage && playOnDamage)) { return };
-            attack(getWorkflowData(workflow)); criticalCheck(workflow)
-        });
-        Hooks.on("midi-qol.DamageRollComplete", (workflow) => {
-            const activity = workflow.activity;
-            if(activity?.description?.chatFlavor?.includes("[noaa]")) return;
-            let playOnDamage = game.settings.get('autoanimations', 'playonDamage');
-            if (workflow.item?.hasAreaTarget || (!playOnDamage && workflow.item?.hasAttack)) { return };
-            damage(getWorkflowData(workflow))
-        });
-        // Items with no Attack/Damage
-        Hooks.on("midi-qol.RollComplete", (workflow) => {
-            const activity = workflow.activity;
-            if(activity?.description?.chatFlavor?.includes("[noaa]")) return;
-            if (workflow.item?.hasAreaTarget || workflow.item?.hasAttack || workflow.item?.hasDamage) { return };
-            useItem(getWorkflowData(workflow))
-        });
-    } else if (dnd5eV4) {
-        Hooks.on("dnd5e.rollAttackV2", async (rolls, data) => {
+    if(!foundry.utils.isNewerVersion(game.system.version, 3.9)) return ui.notifications.error(`Automated Animations: This version of Automated Animations requires DnD5e 4.3 or higher, please downgrade to Automated Animations 5.0.10 or update your game system.`, {permanent: true});
+    Hooks.on("dnd5e.rollAttackV2", async (rolls, data) => {
             const roll = rolls[0];
+            const hit = roll.total >= (roll.options.target ?? 0);
             const activity = data.subject;
+            activity.actor.hits ??= {};
+            activity.actor.hits[activity.relativeID] = hit;
             if(activity?.description?.chatFlavor?.includes("[noaa]")) return;
             const playOnDamage = game.settings.get('autoanimations', 'playonDamageCore');
             if (["circle", "cone", "cube", "cylinder", "line", "sphere", "square", "wall"].includes(activity?.target?.template?.type) || (activity?.damage?.parts?.length && activity?.type != "heal" && playOnDamage)) { return; }
             const item = activity?.item;
+            criticalCheck(roll, item);
             const ammoItem = item?.parent?.items?.get(data?.ammoUpdate?.id) ?? null;
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
-            criticalCheck(roll, item);
-            attackV2(await getRequiredData({item: item, actor: item.parent, workflow: item, rollAttackHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, ammoItem, overrideNames}));
+            attackV2(await getRequiredData({item: item, actor: item.parent, roll: item, rollAttackHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, ammoItem, overrideNames, hit}));
         });
-        Hooks.on("dnd5e.rollDamageV2", async (rolls, data) => {
+    Hooks.on("dnd5e.rollDamageV2", async (rolls, data) => {
             const roll = rolls[0];
             const activity = data.subject;
+            const hit = !!(activity.actor.hits?.[activity.relativeID] ?? true);
+            if(activity.actor.hits) delete activity.actor.hits[activity.relativeID];
             if(activity?.description?.chatFlavor?.includes("[noaa]")) return;
             const playOnDamage = game.settings.get('autoanimations', 'playonDamageCore');
             if (["circle", "cone", "cube", "cylinder", "line", "sphere", "square", "wall"].includes(activity?.target?.template?.type) || (activity?.type == "attack" && !playOnDamage)) { return; }
             const item = activity?.item;
+            criticalCheck(roll, item);
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
-            damageV2(await getRequiredData({item, actor: item.parent, workflow: item, rollDamageHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, overrideNames}));
+            damageV2(await getRequiredData({hit: hit, item, actor: item.parent, roll: item, rollDamageHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, overrideNames, }));
         });
-        Hooks.on('dnd5e.postUseActivity', async (activity, usageConfig, results) => {
-            if(activity?.description?.chatFlavor?.includes("[noaa]")) return;
-            if (["circle", "cone", "cube", "cylinder", "line", "sphere", "square", "wall"].includes(activity?.target?.template?.type) || activity?.type == "attack" || (activity?.damage?.parts?.length && activity?.type != "heal")) {return;}
+    Hooks.on('dnd5e.postUseActivity', async (activity, usageConfig, results) => {
+        if (activity?.description?.chatFlavor?.includes("[noaa]")) return;
+            if (["circle", "cone", "cube", "cylinder", "line", "sphere", "square", "wall"].includes(activity?.target?.template?.type) || ((activity?.damage?.parts?.length || activity?.type == "heal"))) { return; }
             const config = usageConfig;
             const options = results;
             const item = activity?.item;
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
-            useItem(await getRequiredData({item, actor: item.parent, workflow: item, useItemHook: {item, config, options}, spellLevel: options?.flags?.dnd5e?.use?.spellLevel || void 0, overrideNames}));
+            useItem(await getRequiredData({item, actor: item.parent, roll: item, useItemHook: {item, config, options}, spellLevel: options?.flags?.dnd5e?.use?.spellLevel || void 0, overrideNames}));
         });
-    } else {
-        Hooks.on("dnd5e.preRollAttack", async (item, options) => {
-            let spellLevel = options.spellLevel ?? void 0;
-            Hooks.once("dnd5e.rollAttack", async (item, roll) => {
-                criticalCheck(roll, item);
-                let playOnDamage = game.settings.get('autoanimations', 'playonDamageCore')
-                if (item.hasAreaTarget || (item.hasDamage && playOnDamage)) { return; }
-                attack(await getRequiredData({item, actor: item.actor, workflow: item, rollAttackHook: {item, roll}, spellLevel}))
-            })
-        })
-        Hooks.on("dnd5e.rollDamage", async (item, roll) => {
-            let playOnDamage = game.settings.get('autoanimations', 'playonDamageCore')
-            if (item.hasAreaTarget || (item.hasAttack && !playOnDamage)) { return; }
-            damage(await getRequiredData({item, actor: item.actor, workflow: item, rollDamageHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0}))
-        })
-        Hooks.on('dnd5e.useItem', async (item, config, options) => {
-            if (item?.hasAreaTarget || item.hasAttack || item.hasDamage) { return; }
-            useItem(await getRequiredData({item, actor: item.actor, workflow: item, useItemHook: {item, config, options}, spellLevel: options?.flags?.dnd5e?.use?.spellLevel || void 0}))
-        })
-    }
-    // Template creation. Works the same regardless of Midi-QoL
-    if (dnd5eV4) {
         Hooks.on("createMeasuredTemplate", async (template, data, userId) => {
             if (userId !== game.user.id) { return };
             const activity = fromUuidSync(template.flags?.dnd5e?.origin);
             if (!activity) return;
-            if (activity.description.chatFlavor.includes("[noaa]")) return;
+            if (activity?.description?.chatFlavor?.includes("[noaa]")) return;
             const item = activity?.item;
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
-            templateAnimation(await getRequiredData({item, templateData: template, workflow: template, isTemplate: true, overrideNames}));
+            templateAnimation(await getRequiredData({item, templateData: template, roll: template, isTemplate: true, overrideNames}));
         });
-    } else {
-        Hooks.on("createMeasuredTemplate", async (template, data, userId) => {
-            if (userId !== game.user.id) {return };
-            templateAnimation(await getRequiredData({itemUuid: template.flags?.dnd5e?.origin, templateData: template, workflow: template, isTemplate: true}))
-        })
-    }
 }
-
-/**
- *
- * @param {Boolean} hasAreaTarget // Checks to see if the item has an AOE template
- * @param {Boolean} hasAttack // Checks if the item has Attack
- * @param {Boolean} hasDamage // Checks if the item has Damage
- *
- */
 
 async function useItem(input) {
     debug("Item used, checking for animations")
@@ -115,26 +61,7 @@ async function useItem(input) {
     trafficCop(handler)
 }
 
-async function attack(input) {
-    checkAmmo(input)
-    checkReach(input)
-    debug("Attack rolled, checking for animations");
-    const handler = await AAHandler.make(input)
-    if (!handler?.item || !handler?.sourceToken) { console.log("Automated Animations: No Item or Source Token", handler); return;}
-    trafficCop(handler)
-}
-
-async function damage(input) {
-    checkAmmo(input)
-    checkReach(input)
-    debug("Damage rolled, checking for animations")
-    const handler = await AAHandler.make(input)
-    if (!handler?.item || !handler?.sourceToken) { console.log("Automated Animations: No Item or Source Token", handler); return;}
-    trafficCop(handler)
-}
-
 async function attackV2(input) {
-    //checkAmmo(input)
     checkReach(input)
     debug("Attack rolled, checking for animations");
     const handler = await AAHandler.make(input)
@@ -143,7 +70,6 @@ async function attackV2(input) {
 }
 
 async function damageV2(input) {
-    //checkAmmo(input)
     checkReach(input)
     debug("Damage rolled, checking for animations")
     const handler = await AAHandler.make(input)
@@ -161,40 +87,19 @@ async function templateAnimation(input) {
     trafficCop(handler)
 }
 
-function checkAmmo(data) {
-    //const ammo = data.item?.flags?.autoanimations?.fromAmmo;
-    const ammoType = data.item?.system?.consume?.type;
-    data.ammoItem = ammoType === "ammo" ? data.token?.actor?.items?.get(data.item?.system?.consume?.target) : null;
-}
-
 function checkReach(data) {
-    let reach = 0;
-    if (data.item.system?.properties?.rch) {
-        reach += 1;
-    }
-    data.reach = reach;
+    data.reach = data.item.system?.properties?.rch ? 1 : 0;
 }
 
-function getWorkflowData(data) {
-    return {
-        item: data.item,
-        token: data.rangeDetails?.attackingToken ?? data.token,
-        targets: Array.from(data.targets),
-        hitTargets: Array.from(data.hitTargets),
-        spellLevel: data.castData?.castLevel ?? void 0,
-        workflow: data,
-    }
-}
-
-function criticalCheck(workflow, item = {}) {
-    if (!workflow.isCritical && !workflow.isFumble) { return; }
+function criticalCheck(roll, item = {}) {
+    if (!roll.isCritical && !roll.isFumble) { return; }
     debug("Checking for Crit or Fumble")
-    let critical = workflow.isCritical;
-    let fumble = workflow.isFumble;
-    let token = canvas.tokens.get(workflow.tokenId) || getTokenFromItem(item);;
+    const critical = roll.isCritical;
+    const fumble = roll.isFumble;
+    const token = canvas.tokens.get(roll.tokenId) || getTokenFromItem(item);
 
-    let critAnim = game.settings.get("autoanimations", "CriticalAnimation");
-    let critMissAnim = game.settings.get("autoanimations", "CriticalMissAnimation");
+    const critAnim = game.settings.get("autoanimations", "CriticalAnimation");
+    const critMissAnim = game.settings.get("autoanimations", "CriticalMissAnimation");
 
     switch (true) {
         case (game.settings.get("autoanimations", "EnableCritical") && critical):
@@ -214,11 +119,12 @@ function criticalCheck(workflow, item = {}) {
     }
 
     function getTokenFromItem(item) {
-        let token = item?.parent?.token;
-        if (token) { return token }
-        let tokens = canvas.tokens.placeables.filter(token => token.actor?.items?.get(item.id));
-        let trueToken = tokens.length > 1 ? tokens.find(x => x.id === _token.id) || tokens[0] : tokens[0];
-        return trueToken;
+        const token = item?.parent?.token;
+        if (token) return token;
+        const tokens = canvas.tokens.placeables.filter(token => token.actor?.items?.get(item.id));
+        const fallBack = tokens[0];
+        const mostLikely = tokens.find(x => x.id === _token.id);
+        return mostLikely ?? fallBack;
     }
 
 }
