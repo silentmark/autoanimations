@@ -51,6 +51,8 @@ export async function getRequiredData(data) {
     data.extraNames ||= [];
     data.overrideNames ||= [];
 
+    Hooks.callAll("aa.getRequiredData", data);
+
     return { ...data }
     //return {item: data.item, token: data.token, targets: data.targets}
 }

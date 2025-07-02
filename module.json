@@ -14,10 +14,10 @@
 		}
 	],
 	"url": "https://github.com/theripper93/autoanimations",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"compatibility": {
-		"minimum": "11",
-		"verified": "12"
+		"minimum": "13",
+		"verified": "13"
 	},
 	"minimumCoreVersion": "11",
 	"compatibleCoreVersion": "12",

@@ -91,5 +91,6 @@
     --tjs-input-text-align: center;
     --tjs-input-border: 1.5px outset rgba(0, 0, 0, 0.5);
     --tjs-input-border-radius: 1em;
+    --tjs-input-flex: 1;
   }
 </style>

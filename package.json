@@ -24,7 +24,10 @@
   "devDependencies": {
     "vite": "^5"
   },
-  "browserslist": [">5%", "not IE 11"],
+  "browserslist": [
+    ">5%",
+    "not IE 11"
+  ],
   "scripts": {
     "build": "vite build",
     "watch": "vite build --watch",
