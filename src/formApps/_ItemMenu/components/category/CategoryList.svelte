@@ -7,6 +7,7 @@
    import BuildTemplateFx  from "../../../Menus/BuildMenu/BuildTemplateFX.svelte";
    import BuildAura        from "../../../Menus/BuildMenu/BuildAura.svelte";
    import BuildPreset      from "../../../Menus/BuildMenu/BuildPreset.svelte";
+   import BuildAeOnToken from "../../../Menus/ActiveEffects/BuildAEOnToken.svelte";
 
    //export let animation;
    let { animation } = getContext('animation-data');

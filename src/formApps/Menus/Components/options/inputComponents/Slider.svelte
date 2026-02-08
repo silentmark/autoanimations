@@ -56,6 +56,7 @@
         background-color: rgba(0, 0, 0, 0.2);
         transition: background-color .3s;
         border: none;
+        min-height: unset;
     }
 
     .aa-SliderBox button::after {
@@ -88,21 +89,19 @@
         border-radius: 100%;
     }
     .aa-SliderBox button[aria-checked="true"]::before {
-    font-family: "Font Awesome 5 Free";
+    font-family: var(--font-awesome);
     font-size: 16px;
     content: "\f00c";
     position:relative;
-    bottom: 4px;
     right: 10px;
     color: white;
     font-weight: bold;
   }
   .aa-SliderBox button[aria-checked="false"]::before {
-    font-family: "Font Awesome 5 Free";
+    font-family: var(--font-awesome);
     font-size: 16px;
     content: "\f00d";
     position:relative;
-    bottom: 4px;
     left: 10px;
     color: rgba(0, 0, 0, 0.6);
     font-weight: bold;

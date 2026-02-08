@@ -19,8 +19,6 @@
 		"minimum": "13",
 		"verified": "13"
 	},
-	"minimumCoreVersion": "11",
-	"compatibleCoreVersion": "12",
 	"scripts": [],
 	"esmodules": [
 		"dist/autoanimations.js"
@@ -80,15 +78,15 @@
 			"name": "正體中文",
 			"path": "lang/zh-tw.json"
 		},
+    {
+			"lang": "cs",
+			"name": "Čeština",
+			"path": "lang/cs.json"
+		},
 		{
 			"lang": "cn",
 			"name": "中文（简体）",
 			"path": "lang/zh_Hans.json"
-		},
-		{
-			"lang": "pt-BR",
-			"name": "Português (Brasil)",
-			"path": "lang/pt_BR.json"
 		}
 	],
 	"relationships": {

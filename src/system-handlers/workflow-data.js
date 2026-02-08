@@ -73,7 +73,7 @@ export default class AAHandler {
         if (data.hit && !this.hitTargets) this.hitTargets = data.targets;
         this.hitTargets ??= [];
         this.hitTargetsId = Array.from(this.hitTargets.filter(actor => actor.id).map(actor => actor.id));
-        this.playOnMiss = data.playOnMiss ?? (game.modules.get('midi-qol')?.active || game.system.id === 'pf2e'  || game.system.id === 'dnd5e' ? game.settings.get("autoanimations", "playonmiss") : false) ?? false;
+        this.playOnMiss = data.playOnMiss ?? (game.modules.get('midi-qol')?.active || game.system.id === 'pf2e'  || game.system.id === 'sf2e' || game.system.id === 'dnd5e' ? game.settings.get("autoanimations", "playonmiss") : false) ?? false;
 
         this.menu = this.animationData.menu;
 
@@ -117,9 +117,11 @@ export default class AAHandler {
 
     // Sets the Size of the effect
     getSize(isRadius = false, size = 1, token, addToken = false) {
-        return isRadius
-            ? addToken ? (size * 2) + (token.w / canvas.grid.size) : size * 2
-            : (token.w / canvas.grid.size) * 1.5 * size;
+        const td = token.document;
+        const maxSize = Math.max(td.width * td.texture.scaleX, td.height * td.texture.scaleY) / (td.ring.enabled*td.ring.subject.scale || 1);
+        if (isRadius && addToken) return (size * 2) + maxSize;
+        if (isRadius) return size * 2;
+        return maxSize * 1.5 * size;
     }
 
     getDistance(target) {

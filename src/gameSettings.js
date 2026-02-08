@@ -783,6 +783,7 @@ class AAGameSettings extends TJSGameSettingsWithUI {
                 });
 	break;
          case 'pf2e':
+         case 'sf2e':
             settings.push({
                namespace,
                key: 'playonDamageCore',
@@ -869,6 +870,22 @@ class AAGameSettings extends TJSGameSettingsWithUI {
                   config: true,
                }
             });
+            break;
+         case 'impmal':
+                settings.push({
+                  namespace,
+                  key: 'criticalAnimation',
+                  folder: game.system.title || game.system.name,
+                  options: {
+                    name: 'autoanimations.settings.criticalAnimation',
+                    //name: 'Choose A File',
+                    scope: scope.world,
+                    config: true,
+                    type: String,
+                    default: '',
+                    filePicker: 'imagevideo'
+                  }
+                });
             break;
          case "cyberpunk-red-core":
             settings.push({

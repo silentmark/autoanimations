@@ -19,7 +19,7 @@
 
 <table class="c">
     <tr>
-        <td style="width: 6em; border: none;">
+        <td style="border: none;">
             <div class="flexrow">
                 <label for="" class="aa-customFont">{label}</label>
                 <input
@@ -36,10 +36,10 @@
             type="text"
             bind:value={$animation[section][section02].customPath}
             on:change={() => removeMetaData()}
-            style="font-weight:normal; font-size:small; border-radius: 5px;text-align:left; width: 100%; height: 1.75em"
+            style="font-weight:normal; font-size:small; border-radius: 5px;text-align:left; width: 100%;"
             />
         </td>
-        <td style="width: 4em;border: none" class={isCustom ? "" : "aa-disableOpacity"}>
+        <td style="border: none" class={isCustom ? "" : "aa-disableOpacity"}>
             <i class="fas fa-file-import"
                title="File Picker"
                style="font-size:1.5em"
@@ -64,5 +64,14 @@
         font-family: "Modesto Condensed", "Palatino Linotype", serif;
         font-weight: bold;
         font-size: 1.5em;
+    }
+    input[type=checkbox]{
+        max-width: 1.5em;
+    }
+    input[type=checkbox]:checked::after{
+        content: "";
+    }
+        input[type=checkbox]:checked::before{
+                    background-color: black !important;
     }
 </style>

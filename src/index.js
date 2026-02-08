@@ -69,7 +69,7 @@ function registerAAItemHooks() {
                 await flagMigrations.handle(itemSheet.item);
                 const pf2eRuleTypes = ['condition', 'effect'];
                 // if this is a PF1 "Buff" effect or PF2e Ruleset Item (Active Effects) launch the Active Effect menu. Otherwise continue as normal
-                if ((game.system.id === 'pf1' && itemSheet.item?.type === 'buff') || (game.system.id === 'pf2e' && pf2eRuleTypes.includes(itemSheet.item?.type))) {
+                if ((game.system.id === 'pf1' && itemSheet.item?.type === 'buff') || ((game.system.id === 'pf2e' || game.system.id === 'sf2e') && pf2eRuleTypes.includes(itemSheet.item?.type))) {
                     new AEMenuApp(itemSheet.item, {}).render(true, { focus: true });
                 } else {
                     new ItemMenuApp(itemSheet.item, {}).render(true, { focus: true });
@@ -93,31 +93,18 @@ function registerAAItemHooks() {
                 await flagMigrations.handle(document);
                 const pf2eRuleTypes = ['condition', 'effect'];
                 // if this is a PF1 "Buff" effect or PF2e Ruleset Item (Active Effects) launch the Active Effect menu. Otherwise continue as normal
-                if ((game.system.id === 'pf1' && document?.type === 'buff') || (game.system.id === 'pf2e' && pf2eRuleTypes.includes(document?.type))) {
+                if ((game.system.id === 'pf1' && document?.type === 'buff') || ((game.system.id === 'pf2e' || game.system.id === 'sf2e') && pf2eRuleTypes.includes(document?.type))) {
                     new AEMenuApp(document, {}).render(true, { focus: true });
                 } else {
+                    if(document.documentName === "Item") {
                     new ItemMenuApp(document, {}).render(true, { focus: true });
+                    }else if(document.documentName === "ActiveEffect") {
+                        new AEMenuApp(document, {}).render(true, { focus: true });
+                    }
                 }
             }
         }
         buttons.push(buttonOptions)
-    })
-
-    // Using AE Config header buttons Hook to inject A-A button
-    Hooks.on('getActiveEffectConfigHeaderButtons', async (aeSheet, buttons) => {
-        if (!game.user.isGM && game.settings.get("autoanimations", "hideFromPlayers")) {
-            return;
-        }
-        let buttonOptions = {
-            class: "aaItemSettings",
-            icon: "fas fa-biohazard",
-            label: "A-A",
-            onclick: async () => {
-                await flagMigrations.handle(aeSheet.document);
-                new AEMenuApp(aeSheet.document, {}).render(true, { focus: true });
-            }
-        }
-        buttons.splice(0, 0, buttonOptions)
     })
 
     // Tidy 5e Sheet App V2 compatibility
@@ -132,7 +119,7 @@ function registerAAItemHooks() {
                         await flagMigrations.handle(item);
                         const pf2eRuleTypes = ['condition', 'effect'];
                         // if this is a PF1 "Buff" effect or PF2e Ruleset Item (Active Effects) launch the Active Effect menu. Otherwise continue as normal
-                        if ((game.system.id === 'pf1' && itemSheet.item?.type === 'buff') || (game.system.id === 'pf2e' && pf2eRuleTypes.includes(itemSheet.item?.type))) {
+                        if ((game.system.id === 'pf1' && itemSheet.item?.type === 'buff') || ((game.system.id === 'pf2e' || game.system.id === 'sf2e') && pf2eRuleTypes.includes(itemSheet.item?.type))) {
                             new AEMenuApp(item, {}).render(true, { focus: true });
                         } else {
                             new ItemMenuApp(item, {}).render(true, { focus: true });
@@ -209,6 +196,7 @@ Hooks.once('ready', async function () {
      * Shadow of the Demonlord
      * Forbidden Lands
      * Starfinder RPG
+     * Starfinder 2e
      * Star Wars FFG
      * Star Wars 5e
      * SWADE
@@ -218,6 +206,8 @@ Hooks.once('ready', async function () {
      * The Witcher RPG
      * TwoDSix
      * Dark Heresy 2e
+     * Fantastic Depths
+     * GURPS
     */
 
     // Register Hooks by system
@@ -291,6 +281,7 @@ function handleTemplates() {
 
     // Removes the template Grid Highlighting on Canvas Load
     function removeGridHighlightsOnLoad() {
+        if(!canvas.grid) return;
         let highlights = Object.keys(canvas.grid.highlightLayers);
         if (highlights.length) {
             highlights.forEach((e) => {

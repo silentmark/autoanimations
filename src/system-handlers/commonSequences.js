@@ -91,7 +91,6 @@ export function secondaryEffect(secondary, seq, targetArray, targetEnabled = fal
 }
 
 export function targetEffect(targetFX, seq, targetArray, missable = false, handler) {
-    debugger
     const options = targetFX.options;
     if (targetFX.sound) {
         seq.addSequence(targetFX.sound)
@@ -124,7 +123,7 @@ export function targetEffect(targetFX, seq, targetArray, missable = false, handl
         }
         if (options.persistent) {
             thisSeq.persist(true, { persistTokenPrototype: true })
-            thisSeq.attachTo(currentTarget, { bindVisibility: targetFX.unbindVisibility, bindAlpha: targetFX.unbindAlpha })
+            thisSeq.attachTo(currentTarget, { bindVisibility: targetFX.options.unbindVisibility, bindAlpha: targetFX.options.unbindAlpha })
         } else {
             thisSeq.atLocation(missable ? `spot ${currentTarget.id}` : currentTarget)
         }

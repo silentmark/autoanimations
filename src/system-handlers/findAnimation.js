@@ -33,7 +33,7 @@ export async function handleItem(data) {
         templatefx: game.settings.get("autoanimations", "aaAutorec-templatefx"),
         aura: game.settings.get("autoanimations", "aaAutorec-aura"),
         preset: game.settings.get("autoanimations", "aaAutorec-preset"),
-        aefx: game.settings.get("autoanimations", "aaAutorec-aefx"),
+        aefx: data.activeEffect ? game.settings.get("autoanimations", "aaAutorec-aefx") : [],
     }
 
     let menus = AAAutorecFunctions.sortAndFilterMenus(autorecSettings);

@@ -64,6 +64,11 @@ export async function templatefx(handler, animationData, templateDocument) {
         const tileY = templateType === 'circle' ? (template.y - (tileHeight / 2)) : (template.y + ((templateLength - tileHeight) / 2));
 
         const templateObject = buildTile(tileX, tileY, isOverhead, tileWidth, tileHeight);
+
+        if(data.options.tint && data.options.tintColor) templateObject.texture.tint = data.options.tintColor;
+
+        templateObject.alpha = data.options.opacity;
+
         aaSeq.thenDo(function () {
             socketlibSocket.executeAsGM("placeTile", templateObject);
         })
@@ -117,7 +122,7 @@ export async function templatefx(handler, animationData, templateDocument) {
             if (data.options.persistent) {
                 templateSeq.persist(true)
                 if (data.options.persistType === 'attachtemplate') {
-                    templateSeq.attachTo(template, { followRotation: true })
+                    templateSeq.attachTo(template, { bindRotation: true })
                 } else {
                     templateSeq.atLocation(template, { cacheLocation: true })
                     templateSeq.persist()

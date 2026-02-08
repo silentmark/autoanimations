@@ -32,11 +32,13 @@ export function copyToFrom(animation, item, autorecSettings, isAE) {
          const isInAutorec = isAE
             ? AAAutorecFunctions.singleMenuSearch(
                  AAAutorecFunctions.sortAndFilterMenus(autorecSettings),
-                 AAAutorecFunctions.rinseName(name)
+                 AAAutorecFunctions.rinseName(name),
+                   name
               )
             : AAAutorecFunctions.allMenuSearch(
                  AAAutorecFunctions.sortAndFilterMenus(autorecSettings),
-                 AAAutorecFunctions.rinseName(name)
+                 AAAutorecFunctions.rinseName(name),
+                     name
               );
          if (!isInAutorec) {
             custom_notify("There is no matching Global entry to copy from");
@@ -50,7 +52,7 @@ export function copyToFrom(animation, item, autorecSettings, isAE) {
             content: `Are you sure you want copy <strong>${label}</strong> from the <strong>Global ${menu} Menu?</strong>`,
             draggable: false,
             modal: false,
-         });
+         }, { themeName: 'light' });
 
          if (result) {
             animation.copyFromAutorec(isInAutorec);
