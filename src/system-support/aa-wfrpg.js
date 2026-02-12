@@ -1,22 +1,34 @@
-
-import ItemMenuApp from "../formApps/_ItemMenu/ItemMenuApp.js";
 import { trafficCop } from "../router/traffic-cop.js";
 import AAHandler from "../system-handlers/workflow-data.js";
-import { debug } from "../constants/constants.js";
 import { getRequiredData } from "./getRequiredData.js";
+import { AnimationState } from "../AnimationState.js";
+import { DataSanitizer } from "../aa-classes/DataSanitizer.js";
+import { debug } from "../constants/constants.js";
 
 export function systemHooks() {
-
-   BaseWFRP4eItemSheet.DEFAULT_OPTIONS.window.controls.push({
-      class: "aaItemSettings",
-      icon: "fas fa-biohazard",
-      action: "aaItemSettings",
-      label: "A-A"
+   Hooks.on("updateActiveEffect", (data, toggle, _, userId) => {
+      if (game.settings.get("autoanimations", "disableAEAnimations")) {
+         return;
+      }
+      if (game.user.id !== userId) { return; }
+      toggleActiveEffectsWfrp(data, toggle)
    });
 
-   BaseWFRP4eItemSheet.DEFAULT_OPTIONS.actions.aaItemSettings = function () {
-      new ItemMenuApp(this.item, {}).render(true, { focus: true });
-   };
+   Hooks.on("createActiveEffect", (effect, _, userId) => {
+      if (game.settings.get("autoanimations", "disableAEAnimations")) {
+         return;
+      }
+      if (game.user.id !== userId) { return; }
+      createActiveEffectsWfrp(effect)
+   });
+
+   Hooks.on("deleteActiveEffect", (effect, _, userId) => {
+      if (game.settings.get("autoanimations", "disableAEAnimations")) {
+         return;
+      }
+      if (game.user.id !== userId) { return; }
+      deleteActiveEffectsWfrp(effect)
+   });
 
    Hooks.on("wfrp4e:rollWeaponTest", async (data, info) => {
       if (game.user.id !== info.user) { return; }
@@ -28,7 +40,8 @@ export function systemHooks() {
          workflow: data
       });
       compiledData.targets = data.context?.targets ? Array.from(data.context?.targets).map(token => canvas.tokens.get(token.token)) : [];
-      runWarhammer(compiledData);
+      const handler = await AAHandler.make(data);
+      await trafficCop(handler);
    });
 
    Hooks.on("wfrp4e:rollPrayerTest", async (data, info) => {
@@ -40,7 +53,8 @@ export function systemHooks() {
          actorId: info.speaker?.actor,
          workflow: data
       });
-      runWarhammer(compiledData);
+      const handler = await AAHandler.make(data);
+      await trafficCop(handler);
    });
 
    Hooks.on("wfrp4e:rollCastTest", async (data, info) => {
@@ -53,7 +67,8 @@ export function systemHooks() {
          actorId: info.speaker?.actor,
          workflow: data
       });
-      runWarhammer(compiledData);
+      const handler = await AAHandler.make(data);
+      await trafficCop(handler);
    });
 
    Hooks.on("wfrp4e:applyDamage", async (scriptArgs) => {
@@ -66,7 +81,8 @@ export function systemHooks() {
          actorId: scriptArgs.attacker.id,
          workflow: scriptArgs.opposedTest.attackerTest
       });
-      runWarhammer(compiledData);
+      const handler = await AAHandler.make(compiledData);
+      await trafficCop(handler);
    });
 
    Hooks.on("wfrp4e:rollTraitTest", async (data, info) => {
@@ -78,7 +94,8 @@ export function systemHooks() {
          actorId: info.speaker?.actor,
          workflow: data
       });
-      runWarhammer(compiledData);
+      const handler = await AAHandler.make(compiledData);
+      await trafficCop(handler);
    });
 
    Hooks.on("wfrp4e:rollTest", async (data, info) => {
@@ -92,7 +109,8 @@ export function systemHooks() {
          actorId: info.speaker?.actor,
          workflow: data
       });
-      runWarhammer(compiledData);
+      const handler = await AAHandler.make(compiledData);
+      await trafficCop(handler);
    });
 
    Hooks.on("createMeasuredTemplate", async (template, data, userId) => {
@@ -153,10 +171,106 @@ function onWorkflowStart(clonedData, animationData) {
    }
 }
 
-async function runWarhammer(data) {
-   if (!data.item) { return; }
-   const handler = await AAHandler.make(data);
-   await trafficCop(handler);
+async function createActiveEffectsWfrp(effect) {
+    if (!AnimationState.enabled) { return; }
+
+    const actor = effect.parent instanceof Item ? effect.parent.actor : effect.parent;
+    if (!actor) { return; }
+    const aeToken = actor.token ?? actor.getActiveTokens()[0];
+    if (!aeToken) {
+        debug("Failed to find the Token for the Active Effect")
+        return;
+    }
+    const aeNameField = (effect.name ?? effect.label) + `${aeToken.id}`
+    const checkAnim = Sequencer.EffectManager.getEffects({ object: aeToken, name: aeNameField }).length > 0
+    if (checkAnim) {
+        debug("Animation is already present on the Token, returning.")
+        return;
+    }
+
+    const data = {
+        token: aeToken,
+        targets: [aeToken],
+        item: effect,
+        activeEffect: true,
+        tieToDocuments: true,
+    }
+
+    let handler = await AAHandler.make(data);
+    if (!handler) { return; }
+    if (!handler.item || !handler.sourceToken) {
+      debug("Failed to find the Item or Source Token", handler)
+      return;
+    }
+    // apply the aura effect only to the owner of aura if transferData is aura. Note, this effect is never active on parent.
+    if (handler.animationData?.activeEffectType == 'aura' && effect.system.transferData?.type != "aura") return;
+
+    // apply actual radius from effect to aura
+    if (handler.animationData?.activeEffectType == 'aura' && effect.system.transferData?.type == "aura") {
+        handler.animationData.primary.options.size = handler.item.radius;
+    }
+    // for all other cases - do nothing if effect is disabled.
+    else if (effect.disabled) {
+      return;
+    }
+    trafficCop(handler);
+}
+
+async function deleteActiveEffectsWfrp(effect) {
+    const actor = effect.parent instanceof Item ? effect.parent.actor : effect.parent;
+    if (!actor) { return; }
+    const token = actor.token ?? actor.getActiveTokens()[0];
+
+    const data = {
+        token: token,
+        targets: [],
+        item: effect,
+        activeEffect: true,
+    };
+
+    const handler = await AAHandler.make(data);
+    if (!handler) { return; }
+
+    const flagData = handler.animationData
+    const macro = await DataSanitizer.compileMacro(handler, flagData);
+    if (macro) {
+        if (isNewerVersion(game.version, 11)) {
+            new Sequence()
+            .macro(macro.name, {args: ["off", handler, macro.args]})
+            .play()
+        } else {
+            if (game.modules.get("advanced-macros")?.active) {
+                new Sequence()
+                    .macro(macro.name, "off", handler, macro.args)
+                    .play()
+            } else {
+                new Sequence()
+                    .macro(macro.name)
+                    .play()
+            }
+        }
+    }
+
+   let aaEffects = Sequencer.EffectManager.getEffects({ origin: effect.uuid });
+   if (aaEffects.length > 0) {
+      // Filters the active Animations to isolate the ones active on the Token
+      let currentEffect = aaEffects.filter(i => effect.uuid.includes(i.source?.actor?.id));
+      currentEffect = currentEffect.length < 1 ? aaEffects.filter(i => effect.uuid.includes(i.source?.id)) : currentEffect;
+      if (currentEffect.length < 0) { return; }
+
+      // Fallback for the Source Token
+      if (!handler.sourceToken) {
+            handler.sourceToken = currentEffect[0].source;
+      }
+
+      // End all Animations on the token with .origin(effect.uuid)
+      Sequencer.EffectManager.endEffects({ origin: effect.uuid, object: handler.sourceToken })
+   }
+}
+
+async function toggleActiveEffectsWfrp(effect) {
+   await deleteActiveEffectsWfrp(effect);
+   await createActiveEffectsWfrp(effect);
 }
 
 function compileTargets(targets) {

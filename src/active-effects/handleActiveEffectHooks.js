@@ -1,6 +1,5 @@
 import { createActiveEffects, deleteActiveEffects, checkConcentration, toggleActiveEffects } from "./handleActiveEffects.js";
 import { createRuleElementPF2e, deleteRuleElementPF2e } from "./pf2e/handlePF2eRuleElements.js";
-import { createActiveEffectsWfrp, deleteActiveEffectsWfrp, toggleActiveEffectsWfrp } from "./wfrp4e/handleWfrp4eActiveEffects.js";
 import AAHandler from "../system-handlers/workflow-data.js";
 import { debug } from "../constants/constants.js";
 import { createRuleElementPtu, deleteRuleElementPtu } from "./ptu/handlePtuRuleElements.js";
@@ -16,7 +15,7 @@ export function registerActiveEffectHooks() {
                 if (game.settings.get("autoanimations", "disableAEAnimations")) {
                     debug(`Active Effect Animations are Disabled`);
                     return;
-                }    
+                }
                 if (game.user.id !== userId) { return; }
                 const aePF2eTypes = ['condition', 'effect', 'feat']
                 if (!aePF2eTypes.includes(item.type)) {
@@ -26,15 +25,15 @@ export function registerActiveEffectHooks() {
                 if (item.system?.references?.parent && game.settings.get("autoanimations", "disableNestedEffects")) {
                     debug("This is a nested Ruleset, exiting early")
                     return;
-                }            
+                }
                 createRuleElementPF2e(item);
             })
             Hooks.on("preDeleteItem", (item, data, userId) => {
                 if (shouldContinue(item, userId)) {
                     pf2eDeletedItems.set(item.id, {
-                        item, 
+                        item,
                         token: item.parent?.token || canvas.tokens.placeables.find(token => token.actor?.items?.get(item.id) != null)
-                    })    
+                    })
                 }
             })
             Hooks.on("deleteItem", (item, data, userId) => {
@@ -107,7 +106,7 @@ export function registerActiveEffectHooks() {
                 if (game.settings.get("autoanimations", "disableAEAnimations")) {
                     debug(`Active Effect Animations are Disabled`);
                     return;
-                }    
+                }
                 if (game.user.id !== userId) { return; }
                 const aePtuTypes = ['condition', 'effect']
                 if (!aePtuTypes.includes(item.type)) {
@@ -117,15 +116,15 @@ export function registerActiveEffectHooks() {
                 if (item.system?.references?.parent && game.settings.get("autoanimations", "disableNestedEffects")) {
                     debug("This is a nested Ruleset, exiting early")
                     return;
-                }            
+                }
                 createRuleElementPtu(item);
             })
             Hooks.on("preDeleteItem", (item, data, userId) => {
                 if (ptuShouldContinue(item, userId)) {
                     ptuDeletedItems.set(item.id, {
-                        item, 
+                        item,
                         token: item.parent?.token || canvas.tokens.placeables.find(token => token.actor?.items?.get(item.id) != null)
-                    })    
+                    })
                 }
             })
             Hooks.on("deleteItem", (item, data, userId) => {
@@ -141,30 +140,7 @@ export function registerActiveEffectHooks() {
                 return true;
             }
         case 'wfrp4e':
-            Hooks.on("updateActiveEffect", (data, toggle, other, userId) => {
-                if (game.settings.get("autoanimations", "disableAEAnimations")) {
-                    debug(`Active Effect Animations are Disabled`);
-                    return;
-                }
-                if (game.user.id !== userId) { return; }
-                toggleActiveEffectsWfrp(data, toggle)
-            });
-            Hooks.on("createActiveEffect", (effect, data, userId) => {
-                if (game.settings.get("autoanimations", "disableAEAnimations")) {
-                    debug(`Active Effect Animations are Disabled`);
-                    return;
-                }
-                if (game.user.id !== userId) { return; }
-                createActiveEffectsWfrp(effect)
-            });
-            Hooks.on("deleteActiveEffect", (effect, data, userId) => {
-                if (game.settings.get("autoanimations", "disableAEAnimations")) {
-                    debug(`Active Effect Animations are Disabled`);
-                    return;
-                }
-                if (game.user.id !== userId) { return; }
-                deleteActiveEffectsWfrp(effect, userId)
-            });
+         // Moved to aa-wfrpg.js
             break;
         default:
             Hooks.on("updateActiveEffect", (data, toggle, other, userId) => {
