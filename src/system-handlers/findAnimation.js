@@ -8,16 +8,16 @@ export async function handleItem(data) {
     if (!data.item) { return; };
 
     const item = data.item;
+    const activity = data.activity;
     const itemName = item.name ?? item.label;
     const rinsedItemName = itemName ? AAAutorecFunctions.rinseName(itemName) : "noitem";
 
     const ammoItem = data.ammoItem;
     const rinsedAmmoName = ammoItem?.name ? AAAutorecFunctions.rinseName(ammoItem.name) : "";
 
-    // Send Item thru Flag Merge
+    // Send Item and Activity thru Flag Merge
     const itemFlags = await flagMigrations.handle(data.item, {activeEffect: data.activeEffect}) || {};
-    const itemIsEnabled = !!itemFlags.killAnim ? false : itemFlags.isEnabled ?? true;
-    if (!itemIsEnabled) { return false}
+    const activityFlags = activity ? await flagMigrations.handle(activity, {activeEffect: data.activeEffect}) || {} : null;
     // If Item has Ammunition send it thru the Flag Merge
     const ammoFlags = ammoItem ? await flagMigrations.handle(ammoItem, {activeEffect: data.activeEffect}) || {isEnabled: true} : null;
     
@@ -48,7 +48,13 @@ export async function handleItem(data) {
             autorecObject = AAAutorecFunctions.allMenuSearch(menus, rinsedAmmoName, ammoItem?.name || "");
         }
         if (autorecObject) { return autorecObject }
-    } 
+    }
+
+    const activityIsEnabled = activityFlags ? (!!activityFlags.killAnim ? false : activityFlags.isEnabled ?? true) : true;
+    if (!activityIsEnabled) { return false }
+
+    const itemIsEnabled = !!itemFlags.killAnim ? false : itemFlags.isEnabled ?? true;
+    if (!itemIsEnabled) { return false }
     
     if (data.activeEffect) {
         if (itemFlags.isCustomized) {
@@ -58,7 +64,9 @@ export async function handleItem(data) {
             return autorecObject;
         }
     } else {
-        if (itemFlags.isCustomized) {
+        if (activityFlags?.isCustomized) {
+            return activityFlags;
+        } else if (itemFlags.isCustomized) {
             return itemFlags;
         } else if (!autorecDisabled) {
             const prioritizedNames = [...(data.overrideNames || []), itemName, ...(data.extraNames || [])];

@@ -80,7 +80,7 @@ function registerAAItemHooks() {
     })
 
         Hooks.on('getHeaderControlsApplicationV2', (sheet, buttons) => {
-        if(!["Item", "ActiveEffect"].includes(sheet.document?.documentName)) return;
+        if(!["Item", "ActiveEffect", "Activity"].includes(sheet.document?.documentName)) return;
         if (!game.user.isGM && game.settings.get("autoanimations", "hideFromPlayers")) {
             return;
         }
@@ -96,7 +96,7 @@ function registerAAItemHooks() {
                 if ((game.system.id === 'pf1' && document?.type === 'buff') || ((game.system.id === 'pf2e' || game.system.id === 'sf2e') && pf2eRuleTypes.includes(document?.type))) {
                     new AEMenuApp(document, {}).render(true, { focus: true });
                 } else {
-                    if(document.documentName === "Item") {
+                    if(document.documentName === "Item" || document.documentName === "Activity") {
                     new ItemMenuApp(document, {}).render(true, { focus: true });
                     }else if(document.documentName === "ActiveEffect") {
                         new AEMenuApp(document, {}).render(true, { focus: true });

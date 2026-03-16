@@ -19,14 +19,10 @@
     export let item;
     export let itemFlags;
 
-    const doc = new TJSDocument(item);
-    $:
-    {
-    $doc;
-    $animation.label = $doc.name
-    }
+    const isValidDocument = item instanceof foundry.abstract.Document;
+    const doc = isValidDocument ? new TJSDocument(item) : null;
 
-    let aaFlags = itemFlags.autoanimations || {};
+    let aaFlags = itemFlags?.autoanimations || {};
 
     const { application } = getContext("#external");
     let newFlagData = foundry.utils.deepClone(aaFlags);
@@ -47,9 +43,19 @@
     if (!newFlagData.hasOwnProperty('version')) {
         newFlagData.version = Object.keys(flagMigrations.migrations).map((n) => Number(n)).reverse()[0]
     }
-    newFlagData.label = item.name;
+    newFlagData.label = item.name ?? item.label ?? "";
 
     let animation = new AnimationStore(newFlagData)
+
+    $:
+    {
+        if (doc) {
+            $doc;
+            $animation.label = $doc?.name ?? item?.name ?? item?.label ?? $animation.label;
+        } else if (item?.name || item?.label) {
+            $animation.label = item.name ?? item.label;
+        }
+    }
 
     // Application position store reference. Stores need to be a top level variable to be accessible for reactivity.
     const position = application.position;

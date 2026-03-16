@@ -21,7 +21,7 @@ export function systemHooks() {
             criticalCheck(roll, item);
             const ammoItem = item?.parent?.items?.get(data?.ammoUpdate?.id) ?? null;
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
-            attackV2(await getRequiredData({item: item, actor: item.parent, roll: item, rollAttackHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, ammoItem, overrideNames, hit}));
+            attackV2(await getRequiredData({item: item, actor: item.parent, activity, roll: item, rollAttackHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, ammoItem, overrideNames, hit}));
         });
     Hooks.on("dnd5e.rollDamageV2", async (rolls, data) => {
             const roll = rolls[0];
@@ -34,7 +34,7 @@ export function systemHooks() {
             const item = activity?.item;
             criticalCheck(roll, item);
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
-            damageV2(await getRequiredData({hit: hit, item, actor: item.parent, roll: item, rollDamageHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, overrideNames, }));
+            damageV2(await getRequiredData({hit: hit, item, actor: item.parent, activity, roll: item, rollDamageHook: {item, roll}, spellLevel: roll?.data?.item?.level ?? void 0, overrideNames, }));
         });
     Hooks.on('dnd5e.postUseActivity', async (activity, usageConfig, results) => {
         if (activity?.description?.chatFlavor?.includes("[noaa]")) return;
@@ -43,7 +43,7 @@ export function systemHooks() {
             const options = results;
             const item = activity?.item;
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
-            useItem(await getRequiredData({item, actor: item.parent, roll: item, useItemHook: {item, config, options}, spellLevel: options?.flags?.dnd5e?.use?.spellLevel || void 0, overrideNames}));
+            useItem(await getRequiredData({item, actor: item.parent, activity, roll: item, useItemHook: {item, config, options}, spellLevel: options?.flags?.dnd5e?.use?.spellLevel || void 0, overrideNames}));
         });
         Hooks.on("dnd5e.preUseActivity", (activity, config) => {
         if (activity?.description?.chatFlavor?.includes("[noaa]")) return;
@@ -59,7 +59,7 @@ export function systemHooks() {
             if (activity?.description?.chatFlavor?.includes("[noaa]")) return;
             const item = activity?.item;
             const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : [];
-            templateAnimation(await getRequiredData({item, templateData: template, roll: template, isTemplate: true, overrideNames}));
+            templateAnimation(await getRequiredData({item, activity, templateData: template, roll: template, isTemplate: true, overrideNames}));
         });
 }
 

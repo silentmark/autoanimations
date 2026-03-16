@@ -29,6 +29,7 @@
   setContext('animation-data', {animation, category: animation, idx: 0})
 
   export let item;
+  const documentLabel = item?.documentName === "Activity" ? "Activity" : "Item";
 
   const is5e = game.system.id === "dnd5e";
   const { application } = getContext("#external");
@@ -104,7 +105,7 @@
       class={!isEnabled ? "aa-disableOpacity" : ""}
     >
       <Slider
-        label={localize("autoanimations.menus.customize") + " " + "Item"}
+        label={localize("autoanimations.menus.customize") + " " + documentLabel}
         field="isCustomized"
       />
     </div>
